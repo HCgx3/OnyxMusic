@@ -50,7 +50,7 @@ bot.on("message", async message => {
 
     if (!message.content.startsWith(botprefix)) return;
     let commandfile = bot.commands.get(cmd.slice(botprefix.length)) || bot.commands.get(bot.aliases.get(cmd.slice(botprefix.length)))
-    if (commandfile) commandfile.run(bot, message, args, track)
+    if (commandfile) commandfile.run(bot, message, args, player)
 
 
 })
