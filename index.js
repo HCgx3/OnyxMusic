@@ -3,7 +3,7 @@ const fetch = require('node-fetch');
 const bot = new Discord.Client({ disableEveryone: false });
 const ytdl = require("ytdl-core");
 require("./util/eventHandler")(bot)
-
+const fs = require('fs')
 bot.commands = new Discord.Collection();
 bot.aliases = new Discord.Collection();
 const { Player } = require("discord-player");
