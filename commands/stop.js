@@ -1,5 +1,5 @@
 const discord = require('discord.js');
-const mongoose = require('mongoose')
+
 
 module.exports.run = async (bot, message, args) => {
     let botprefix = "m!"
