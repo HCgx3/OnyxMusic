@@ -7,10 +7,9 @@ require("./util/eventHandler")(bot)
 bot.commands = new Discord.Collection();
 bot.aliases = new Discord.Collection();
 const { Player } = require("discord-player");
-const player = new Player(client);
 // To easily access the player
 
-const player = new Player(client, {
+const player = new Player(bot, {
     leaveOnEmpty: true,
     leaveOnEnd: false,
     leaveOnStop: true
