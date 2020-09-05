@@ -1,14 +1,8 @@
 {
   "name": "onyxmusic",
   "version": "1.0.0",
+  "description": "A Open source free to use music bot",
   "main": "index.js",
-  "dependencies": {
-    "@discordjs/opus": "^0.3.2",
-    "discord-player": "^2.3.1",
-    "discord.js": "^12.3.1",
-    "opusscript": "0.0.7"
-  },
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -22,5 +16,14 @@
     "url": "https://github.com/HCgx3/OnyxMusic/issues"
   },
   "homepage": "https://github.com/HCgx3/OnyxMusic#readme",
-  "description": ""
+  "dependencies": {
+    "discord.js": "^12.3.1",
+    "fs": "0.0.1-security",
+    "lyrics-finder": "^21.3.3",
+    "simple-youtube-api": "^5.2.1",
+    "soundcloud-downloader": "^0.1.6",
+    "string-progressbar": "^1.0.1",
+    "ytdl-core": "^3.2.2",
+    "ytdl-core-discord": "^1.2.1"
+  }
 }

@@ -1,46 +1,25 @@
-const { Util } = require("discord.js");
-const discord = require('discord.js');
+const createBar = require("string-progressbar");
+const { MessageEmbed } = require("discord.js");
 
-module.exports.run = async (bot, message, args) => {
-    let botprefix = "m!"
-            const ErrorEmbed = new discord.MessageEmbed()
-                .setTitle('Onyx Music System')
-                .setThumbnail('https://cdn.discordapp.com/attachments/716956812154503249/724966963184664576/image1.png')
-                .setDescription('Something went wrong: **Probable Causes** --> \n 1. Onyx is already in another Voice Channel \n 2.You do not have permssions to perform this command \n 3.Its already playing a song \n 4.You are not in a voice channel')
-                .setColor('BLUE')
-            if (!message.member.voice.channel) return message.channel.send(ErrorEmbed);
-            if (message.guild.me.voice.channel && message.member.voice.channel.id !== message.guild.me.voice.channel.id) return message.channel.send(ErrorEmbed);
-            if (!bot.player.isPlaying(message.guild.id)) {
-                return message.channel.send(ErrorEmbed)
-            }
+module.exports = {
+  name: "np",
+  description: "Show now playing song",
+  execute(message) {
+    const queue = message.client.queue.get(message.guild.id);
+    if (!queue) return message.reply("There is nothing playing.").catch(console.error);
+    const song = queue.songs[0];
+    const seek = (queue.connection.dispatcher.streamTime - queue.connection.dispatcher.pausedTime) / 1000;
+    const left = song.duration - seek;
 
-            let song = await bot.player.nowPlaying(message.guild.id);
-            let vol = await bot.player.getQueue(message.guild.id);
+    let nowPlaying = new MessageEmbed()
+      .setTitle("Now playing")
+      .setDescription(`${song.title}\n${song.url}`)
+      .setColor("#F8AA2A")
+      .setAuthor("EvoBot")
+      .addField("\u200b", new Date(seek * 1000).toISOString().substr(11, 8) + "[" + createBar((song.duration == 0 ? seek : song.duration), seek, 20)[0] + "]" + (song.duration == 0 ? " ◉ LIVE" : new Date(song.duration * 1000).toISOString().substr(11, 8)), false);
 
-            try {
-                const playingemed = new discord.MessageEmbed()
-                    .setAuthor(`Requested by ${message.author.tag}`, message.author.displayAvatarURL({ dynamic: true, format: 'png' }))
-                    .setDescription(`**Playing now**\n[${song.name}](${song.url})`)
-                    .setThumbnail(song.thumbnail)
-                    .addField('Channel', `${song.author}`, true)
-                    .addField('Duration', `\`\`${song.duration}\`\``, true)
-                    .addField('Progress', bot.player.createProgressBar(message.guild.id))
-                    .setColor('BLUE')
-                    .setFooter(`Current volume: ${vol.volume}% | Onyx Music System`)
-                return message.channel.send(playingemed);
-            } catch (error) {
-                message.channel.send(`Opps something went wrong try again later..`)
-                console.log(error)
-            }
+    if (song.duration > 0) nowPlaying.setFooter("Time Remaining: " + new Date(left * 1000).toISOString().substr(11, 8));
 
-
-        }
-
-module.exports.config = {
-    name: "nowplaying",
-    category: 'music',
-    description: "Displays the current song playing",
-    usage: "<prefix>nowplaying",
-    accessableby: "members",
-    aliases: []
-}
+    return message.channel.send(nowPlaying);
+  }
+};

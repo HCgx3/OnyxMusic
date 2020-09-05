@@ -1,65 +1,83 @@
-const Discord = require('discord.js');
-const fetch = require('node-fetch');
-const bot = new Discord.Client({ disableEveryone: false });
-const ytdl = require("ytdl-core");
-require("./util/eventHandler")(bot)
-const fs = require('fs')
-bot.commands = new Discord.Collection();
-bot.aliases = new Discord.Collection();
-const { Player } = require("discord-player");
-// To easily access the player
+/**
+ * Module Imports
+ */
+const { Client, Collection } = require("discord.js");
+const { readdirSync } = require("fs");
+const { join } = require("path");
+const { PREFIX } = require("./config.json");
 
-const player = new Player(bot, {
-    leaveOnEmpty: true,
-    leaveOnEnd: false,
-    leaveOnStop: true
+const client = new Client({ disableMentions: "everyone" });
+
+client.login(process.env.Token);
+client.commands = new Collection();
+client.prefix = PREFIX;
+client.queue = new Map();
+const cooldowns = new Collection();
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * Client Events
+ */
+client.on("ready", () => {
+  console.log(`${client.user.username} ready!`);
+  client.user.setActivity(`${PREFIX}help`);
 });
-bot.player = player;
+client.on("warn", (info) => console.log(info));
+client.on("error", console.error);
 
+/**
+ * Import all commands
+ */
+const commandFiles = readdirSync(join(__dirname, "commands")).filter((file) => file.endsWith(".js"));
+for (const file of commandFiles) {
+  const command = require(join(__dirname, "commands", `${file}`));
+  client.commands.set(command.name, command);
+}
 
-fs.readdir("./commands/", (err, files) => {
+client.on("message", async (message) => {
+  if (message.author.bot) return;
+  if (!message.guild) return;
 
-    if (err) console.log(err)
+  const prefixRegex = new RegExp(`^(<@!?${client.user.id}>|${escapeRegex(PREFIX)})\\s*`);
+  if (!prefixRegex.test(message.content)) return;
 
-    let jsfile = files.filter(f => f.split(".").pop() === "js")
-    if (jsfile.length <= 0) {
-        return console.log("[LOGS] Couldn't Find Commands!");
+  const [, matchedPrefix] = message.content.match(prefixRegex);
+
+  const args = message.content.slice(matchedPrefix.length).trim().split(/ +/);
+  const commandName = args.shift().toLowerCase();
+
+  const command =
+    client.commands.get(commandName) ||
+    client.commands.find((cmd) => cmd.aliases && cmd.aliases.includes(commandName));
+
+  if (!command) return;
+
+  if (!cooldowns.has(command.name)) {
+    cooldowns.set(command.name, new Collection());
+  }
+
+  const now = Date.now();
+  const timestamps = cooldowns.get(command.name);
+  const cooldownAmount = (command.cooldown || 1) * 1000;
+
+  if (timestamps.has(message.author.id)) {
+    const expirationTime = timestamps.get(message.author.id) + cooldownAmount;
+
+    if (now < expirationTime) {
+      const timeLeft = (expirationTime - now) / 1000;
+      return message.reply(
+        `please wait ${timeLeft.toFixed(1)} more second(s) before reusing the \`${command.name}\` command.`
+      );
     }
+  }
 
-    jsfile.forEach((f, i) => {
-        let pull = require(`./commands/${f}`);
-        bot.commands.set(pull.config.name, pull);
-        pull.config.aliases.forEach(alias => {
-            bot.aliases.set(alias, pull.config.name)
-        });
-    });
+  timestamps.set(message.author.id, now);
+  setTimeout(() => timestamps.delete(message.author.id), cooldownAmount);
+
+  try {
+    command.execute(message, args);
+  } catch (error) {
+    console.error(error);
+    message.reply("There was an error executing that command.").catch(console.error);
+  }
 });
-
-
-bot.on("message", async message => {
-    if (message.author.bot || message.channel.type === "dm") return;
-    if (!message.channel.permissionsFor(bot.user.id).has("SEND_MESSAGES")) return;
-    let botprefix = 'm!'
-    if (message.content.match(new RegExp(`^<@!?${bot.user.id}>( |)$`))) {
-        return message.channel.send(`${message.guild.name}'s Prefix is \`${botprefix}\`\nUse \`${botprefix}help\` for a the help page.`)
-    }
-    if (message.content.indexOf(botprefix) !== 0) return;
-    let messageArray = message.content.split(" ");
-    let cmd = messageArray[0];
-    let args = messageArray.slice(1)
-
-    if (!message.content.startsWith(botprefix)) return;
-    let commandfile = bot.commands.get(cmd.slice(botprefix.length)) || bot.commands.get(bot.aliases.get(cmd.slice(botprefix.length)))
-    if (commandfile) commandfile.run(bot, message, args, player)
-
-
-})
-
-
-
-
-
-
-bot.login(process.env.Token)
-
-
