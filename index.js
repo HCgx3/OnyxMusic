@@ -1,10 +1,8 @@
-/**
- * Module Imports
- */
 const { Client, Collection } = require("discord.js");
+const { PREFIX } = require('./config.json')
 const { readdirSync } = require("fs");
 const { join } = require("path");
-const { PREFIX } = require("./config.json");
+
 
 const client = new Client({ disableMentions: "everyone" });
 
