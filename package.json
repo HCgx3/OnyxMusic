@@ -1,7 +1,6 @@
 {
   "name": "onyxmusic",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "dependencies": {
     "@discordjs/opus": "^0.3.2",
@@ -22,5 +21,6 @@
   "bugs": {
     "url": "https://github.com/HCgx3/OnyxMusic/issues"
   },
-  "homepage": "https://github.com/HCgx3/OnyxMusic#readme"
+  "homepage": "https://github.com/HCgx3/OnyxMusic#readme",
+  "description": ""
 }
